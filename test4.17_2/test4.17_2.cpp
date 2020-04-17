@@ -2,10 +2,46 @@
 //
 
 #include <iostream>
+#include<opencv.hpp>
+
+using namespace cv;
+using namespace std;
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	Mat srcMat = imread("E:\\Picture\\die_on_chip.png");
+	Mat grayMat;
+	Mat srcMat_b;
+	Mat dst = srcMat.clone();
+	Mat kernel = getStructuringElement(MORPH_RECT, Size(3, 3));
+	vector<vector<Point>> contours;
+	cvtColor(srcMat, grayMat, COLOR_BGR2GRAY);
+	threshold(grayMat, srcMat_b, 100, 255, THRESH_OTSU);
+	erode(srcMat_b, srcMat_b, kernel);
+	findContours(srcMat_b, contours, CV_RETR_EXTERNAL, CV_CHAIN_APPROX_NONE);
+	for (int i = 0; i < contours.size(); i++)
+	{
+		RotatedRect rbox = minAreaRect(contours[i]);
+		Point2f vtx[4];
+		rbox.points(vtx);
+		double p = rbox.size.width / rbox.size.height;
+		if (p < 1.1 && p > 0.9)
+		{
+			drawContours(dst, contours, i, Scalar(0, 255, 255), 1, 8);
+			for (int j = 0; j < 4; j++)
+			{
+				line(dst, vtx[j], vtx[j < 3 ? j + 1 : 0], Scalar(0, 0, 255), 2, CV_AA);
+			}
+		}
+		
+	}
+	
+
+
+	imshow("srcMat", srcMat);
+	imshow("srcMat_b", srcMat_b);
+	imshow("dst", dst);
+	waitKey();
 }
 
 // 运行程序: Ctrl + F5 或调试 >“开始执行(不调试)”菜单
